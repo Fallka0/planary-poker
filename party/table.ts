@@ -882,6 +882,8 @@ export class Table extends Server<Env> {
   /** Opens a hand when there are two players for it, after a beat so people can see the table. */
   maybeStart() {
     if (this.state.phase === "playing" || this.state.phase === "starting") return;
+    // House players are company for somebody, not a game of their own.
+    if (!this.state.seats.some((seat) => seat && !seat.isBot)) return;
     this.fillBots();
     if (this.playable().length < 2) {
       if (this.state.phase !== "waiting") {
@@ -949,6 +951,31 @@ export class Table extends Server<Env> {
     }
     // Humans waiting on a bot's seat get it now.
     await this.seatWaiting();
+
+    // A house table with nobody at it stops dealing.
+    //
+    // The house players top themselves up and always have two of them, so
+    // without this a table would go on dealing hands to itself forever once
+    // the last player left — burning the Durable Object's clock around the
+    // clock and filling the log with hands nobody played. They come back the
+    // moment somebody sits down.
+    if (!this.state.seats.some((seat) => seat && !seat.isBot)) {
+      for (let index = 0; index < SEATS; index++) if (this.state.seats[index]?.isBot) this.removeSeat(index);
+      this.state.phase = "waiting";
+      this.state.street = "preflop";
+      this.state.board = [];
+      this.state.pot = 0;
+      this.state.pots = [];
+      this.state.toAct = null;
+      this.state.deadline = null;
+      this.state.result = null;
+      this.state.winning = [];
+      for (const seat of this.state.seats) if (seat) clearHand(seat);
+      await this.persist();
+      this.broadcastState();
+      this.notifyLobby();
+      return;
+    }
     this.fillBots();
 
     const playing = this.playable();
