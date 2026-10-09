@@ -510,11 +510,7 @@ select {
   animation: pkDeal 380ms var(--ease-deal) both;
 }
 .seat-card > .card-holder {
-  position: relative;
-  width: 100%;
-  height: 100%;
   border-radius: calc(5 * var(--px));
-  transition: opacity 380ms ease, transform 440ms cubic-bezier(0.5, 0, 0.3, 1), box-shadow 300ms ease;
 }
 .seat-card.is-mucked > .card-holder {
   opacity: 0;
@@ -684,11 +680,7 @@ select {
   animation: pkDeal 380ms var(--ease-deal) both;
 }
 .me-card > .card-holder {
-  position: relative;
-  width: 100%;
-  height: 100%;
   border-radius: calc(8 * var(--px));
-  transition: opacity 300ms ease, box-shadow 300ms ease;
 }
 .me-pod {
   position: absolute;
@@ -1475,25 +1467,59 @@ select {
 
 /* ── Cards (the printed ink, from PlanaryCard) ───── */
 
-/*
-   The card is its own container, so everything printed on it is a
-   percentage of its width (`cqw`). 120 × 168 is the drawing's size in the
-   handoff, and the numbers below are that drawing divided by 120.
-*/
-.card,
-.card-back {
+/* ── Cards (the printed ink, as Grimoire prints it) ──
+   The drawing is 120 × 168 and the numbers below are that drawing divided by
+   120, so one card scales to all three sizes the table deals it at. The
+   *holder* is the container, never the card: an element cannot query itself,
+   and a radius in cqw set on the card would resolve against the table panel
+   and round the corners clean off. */
+
+.card-holder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  container-type: inline-size;
+  transition: opacity 300ms ease, transform 440ms cubic-bezier(0.5, 0, 0.3, 1), box-shadow 300ms ease;
+}
+
+.card {
   position: absolute;
   inset: 0;
-  container-type: inline-size;
   border-radius: 8.33cqw;
   overflow: hidden;
-  box-shadow: 0 12px 24px -12px rgba(20, 2, 8, 0.7), 0 1px 2px rgba(20, 2, 8, 0.35);
   user-select: none;
+  box-shadow: 0 12px 24px -12px rgba(20, 2, 8, 0.7), 0 1px 2px rgba(20, 2, 8, 0.35);
 }
-.card {
+.card-play {
   background: var(--paper);
 }
-.card-rank {
+
+/* The dot screen, fading in toward the foot of the card. */
+.card-halftone {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(90, 15, 34, 0.13) 0 1.25cqw, transparent 1.58cqw) 0 0 / 6.67cqw 6.67cqw;
+  -webkit-mask-image: linear-gradient(180deg, transparent 35%, #000 100%);
+  mask-image: linear-gradient(180deg, transparent 35%, #000 100%);
+}
+
+.card-pip {
+  position: absolute;
+  width: 53.33cqw;
+  height: auto;
+}
+/* The pale plate goes down first, six pixels out of line. */
+.card-pip-plate {
+  left: 38.33cqw;
+  top: 75cqw;
+}
+.card-pip-ink {
+  left: 33.33cqw;
+  top: 70cqw;
+  mix-blend-mode: multiply;
+}
+
+.card-corner {
   position: absolute;
   left: 7.5cqw;
   top: 7.5cqw;
@@ -1504,46 +1530,38 @@ select {
   gap: 3.33cqw;
   font-family: var(--font-poster), sans-serif;
   font-weight: 800;
+}
+.card-rank {
+  font-size: 28.33cqw;
   line-height: 0.82;
 }
-.card-rank > span {
-  font-size: 28.33cqw;
-}
-.card-rank svg {
-  width: 60.7%;
+.card-corner svg {
+  width: 14.17cqw;
   height: auto;
 }
-.card-pip {
-  position: absolute;
-  left: 33.33cqw;
-  top: 50%;
-  width: 53.33cqw;
-  height: auto;
-  mix-blend-mode: multiply;
-}
+
 .card-back {
   background: var(--layer-2);
 }
-.card-back-dots {
+.card-back::before {
+  content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle, rgba(255, 214, 224, 0.09) 0 1.9cqw, transparent 2.25cqw) 0 0 / 8.33cqw 8.33cqw;
+  background: radial-gradient(circle, rgba(255, 214, 224, 0.09) 0 1.92cqw, transparent 2.25cqw) 0 0 / 8.33cqw 8.33cqw;
 }
-.card-back-frame {
+.card-back-rule {
   position: absolute;
-  inset: 5.8cqw;
+  inset: 5.83cqw;
   border-radius: 5cqw;
   border: 1.25cqw solid rgba(246, 238, 228, 0.7);
 }
-.card-back-mark {
+.card-back > svg {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-}
-.card-back-mark svg {
+  left: 50%;
+  top: 50%;
   width: 38.33cqw;
   height: auto;
+  translate: -50% -50%;
 }
 
 /* ── Animations ──────────────────────────────────── */

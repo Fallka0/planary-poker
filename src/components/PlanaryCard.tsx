@@ -1,16 +1,25 @@
 import { type Card, isRed, rankLabel, SUIT_NAMES, type Suit } from "../../shared/cards";
 
-/**
- * A Planary playing card, in the Shell look: cream stock, one ink, and the
- * suit printed large and off-centre so a fanned hand still reads.
- *
- * The card sizes itself to its container rather than taking a width, because
- * the same card appears at three sizes on the table — 60×84 in a bot's hand,
- * 86×121 on the board, 94×131 in your own — and the handoff scales one
- * drawing rather than drawing three. Everything inside is therefore a
- * percentage of the card's own width (`cqw`), which is what the stylesheet's
- * card rules are written in.
- */
+/*
+  A card, screen-printed — the same card Grimoire deals.
+
+  120 × 168 on cream paper, with a halftone that fades in toward the foot and
+  the suit printed twice: once in a pale plate, once in ink, about six pixels
+  off register. That misprint is the whole trick: it is what stops a flat SVG
+  from reading as a flat SVG. Nothing here is glossy, bevelled or lit, because
+  nothing anywhere in this casino is.
+
+  ── Why everything is in cqw ──────────────────────────────────────────
+  The drawing is designed at 120 × 168 and dealt at three sizes: 60 × 84 in
+  another player's hand, 86 × 121 on the board, 94 × 131 in your own. Rather
+  than three drawings, the card's holder is the container and every number
+  below is that one drawing divided by 120 — so `10px` of corner becomes
+  8.33cqw and stays 10px-worth at every size.
+
+  The container has to be the holder and not the card: an element cannot
+  query itself, so a radius set in cqw on the card would silently resolve
+  against the table panel instead and round the corners off completely.
+*/
 
 const SUIT_PATHS: Record<Suit, string> = {
   h: "M50 90C22 68 6 50 6 31 6 16 17 6 31 6c9 0 16 5 19 12 3-7 10-12 19-12 14 0 25 10 25 25 0 19-16 37-44 59z",
@@ -48,26 +57,35 @@ export function ChipMark({ letter, fill = "#f6eee4", ink = "#5e1a34" }: { letter
 }
 
 export function CardFace({ card }: { card: Card }) {
-  const ink = isRed(card) ? "#b3122e" : "#22060e";
+  const red = isRed(card);
+  const ink = red ? "#b3122e" : "#22060e";
+  const plate = red ? "#ff5a78" : "rgba(34,6,14,0.16)";
+  const rank = rankLabel(card.r);
+
   return (
-    <span className="card" style={{ color: ink }} role="img" aria-label={`${RANK_NAMES[rankLabel(card.r)] ?? rankLabel(card.r)} of ${SUIT_NAMES[card.s]}`}>
-      <SuitMark suit={card.s} className="card-pip" />
-      <span className="card-rank" aria-hidden="true">
-        <span>{rankLabel(card.r)}</span>
+    <span className="card card-play" role="img" aria-label={`${RANK_NAMES[rank] ?? rank} of ${SUIT_NAMES[card.s]}`}>
+      <span className="card-halftone" aria-hidden="true" />
+      {/* The pale plate goes down first, six pixels out of line. */}
+      <svg className="card-pip card-pip-plate" viewBox="0 0 100 100" aria-hidden="true">
+        <path d={SUIT_PATHS[card.s]} fill={plate} />
+      </svg>
+      <svg className="card-pip card-pip-ink" viewBox="0 0 100 100" aria-hidden="true">
+        <path d={SUIT_PATHS[card.s]} fill={ink} />
+      </svg>
+      <span className="card-corner" style={{ color: ink }} aria-hidden="true">
+        <span className="card-rank">{rank}</span>
         <SuitMark suit={card.s} />
       </span>
     </span>
   );
 }
 
+/** The back of a card: the house chip on the table's own field. */
 export function CardBack() {
   return (
-    <span className="card-back" role="img" aria-label="Face-down card">
-      <span className="card-back-dots" aria-hidden="true" />
-      <span className="card-back-frame" aria-hidden="true" />
-      <span className="card-back-mark" aria-hidden="true">
-        <ChipMark letter="H" />
-      </span>
+    <span className="card card-back" role="img" aria-label="Face-down card">
+      <span className="card-back-rule" aria-hidden="true" />
+      <ChipMark letter="H" fill="#f6eee4" ink="#5e1a34" />
     </span>
   );
 }

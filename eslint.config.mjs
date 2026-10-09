@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The table server's local dev bundle, left behind by `npm run party`.
+    ".wrangler/**",
   ]),
 ]);
 
