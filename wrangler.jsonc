@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "planary-poker",
+  "main": "party/worker.ts",
+  "compatibility_date": "2025-09-01",
+  "durable_objects": {
+    "bindings": [
+      { "name": "Table", "class_name": "Table" },
+      { "name": "Lobby", "class_name": "Lobby" }
+    ]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Table", "Lobby"] }],
+  "services": [{ "binding": "CASINO", "service": "planary-casino-api" }],
+  "observability": { "enabled": true }
+}
