@@ -86,6 +86,8 @@ export function Table({ id, sitOnArrival, justCreated }: { id: string; sitOnArri
   const [watching, setWatching] = useState(false);
   const [copied, setCopied] = useState(false);
   const [raise, setRaise] = useState<{ context: string; to: number } | null>(null);
+  /** What's in the amount field while it's being typed in, before it's clamped. */
+  const [draft, setDraft] = useState<{ context: string; text: string } | null>(null);
   const satRef = useRef(false);
 
   // The first click or key press is what lets the browser make sound.
@@ -131,7 +133,7 @@ export function Table({ id, sitOnArrival, justCreated }: { id: string; sitOnArri
   }
 
   /**
-   * The slider's value is tied to the betting it was chosen for: a new hand,
+   * The raise amount is tied to the betting it was chosen for: a new hand,
    * a new street or a raise in front of you all make the old number
    * meaningless, so it falls back to the minimum rather than being reset by
    * an effect a render later.
@@ -139,6 +141,7 @@ export function Table({ id, sitOnArrival, justCreated }: { id: string; sitOnArri
   const context = `${state.hand}:${state.street}:${state.curBet}:${state.toAct}`;
   const raiseTo = raise && raise.context === context ? raise.to : null;
   const setRaiseTo = (to: number) => setRaise({ context, to });
+  const typed = draft && draft.context === context ? draft.text : null;
 
   const stakes = state.stakes;
   const bb = stakes.bb;
@@ -398,19 +401,35 @@ export function Table({ id, sitOnArrival, justCreated }: { id: string; sitOnArri
                       );
                     })}
                   </div>
-                  <div className="raise-row">
+                  <label className="raise-row">
+                    <span className="raise-label">{state.curBet === 0 ? "Bet" : "Raise to"}</span>
                     <input
-                      type="range"
-                      min={minTo}
-                      max={maxTo}
-                      step={10}
-                      value={amount}
+                      className="raise-input"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={typed ?? formatChips(amount)}
                       disabled={!canRaise}
-                      onChange={(event) => setRaiseTo(Number(event.target.value))}
+                      onFocus={(event) => {
+                        setDraft({ context, text: String(amount) });
+                        requestAnimationFrame(() => event.target.select());
+                      }}
+                      onChange={(event) => {
+                        const text = event.target.value.replace(/\D/g, "");
+                        setDraft({ context, text });
+                        if (text) setRaiseTo(Number(text));
+                      }}
+                      // Leaving the field shows what will actually be bet: the typed number, held between min and all-in.
+                      onBlur={() => setDraft(null)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") event.currentTarget.blur();
+                      }}
                       aria-label="Amount to raise to"
                     />
-                    <span className="raise-amount">{formatChips(amount)}</span>
-                  </div>
+                    <span className="raise-limits">
+                      {formatChips(minTo)} – {formatChips(maxTo)}
+                    </span>
+                  </label>
                 </div>
                 <button className="act act-fold" disabled={!myTurn} onClick={() => act({ type: "fold" }, "fold")}>
                   <span className="act-top">Fold</span>
