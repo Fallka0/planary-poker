@@ -174,12 +174,15 @@ const frozen = {
   rolls: produced,
   shoeFirstTen: shoe.slice(0, 10),
   cardsFirstTen: (await cards.shuffledShoe("0123456789abcdef".repeat(4), "", 0)).slice(0, 10),
-  // Per machine: the strip lengths, the stated return, and where the reels
-  // stop on five known spins. A strip edited anywhere moves one of these.
+  // Per machine version: the strip lengths, the stated return, and where the
+  // reels stop on five known spins. A strip edited anywhere moves one of these.
+  // Every version is here, retired ones too, because old rounds are verified
+  // against the machine they were played on. Version 1 keeps its bare id, the
+  // key it was first frozen under.
   machines: Object.fromEntries(
     await Promise.all(
-      slots.MACHINES.map(async (machine) => [
-        machine.id,
+      slots.ALL_VERSIONS.map(async (machine) => [
+        machine.version === 1 ? machine.id : `${machine.id}@v${machine.version}`,
         {
           version: machine.version,
           strips: machine.reels.map((reel) => reel.length),
